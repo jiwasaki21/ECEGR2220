@@ -1,0 +1,27 @@
+	.data
+
+	Z: .word 0
+
+	.text
+
+main:
+
+	li t0, 15
+	li t1, 10
+	li t2, 5
+	li t3, 2
+	li t4, 18
+	li t5, -3
+	
+	sub t1, t0, t1
+	mul t3, t2, t3
+	sub t4, t4, t5
+	div t0, t0, t2
+	add t1, t1, t3
+	add t1, t1, t4
+	sub t1, t1, t0
+	sw t1, Z, t6
+	
+	li a7, 1
+	lw a0, Z
+	ecall
