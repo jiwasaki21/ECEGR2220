@@ -1,3 +1,4 @@
+
 --------------------------------------------------------------------------------
 --
 -- LAB #3
@@ -74,6 +75,54 @@ architecture memmy of register8 is
 	end component;
 begin
 	-- insert your code here.
+	bit0: bitstorage port map (
+	    bitin => datain(0),
+	    enout => enout,
+	    writein => writein,
+	    bitout => dataout(0) );
+
+	bit1: bitstorage port map (
+	    bitin => datain(1),
+	    enout => enout,
+	    writein => writein,
+	    bitout => dataout(1) );
+
+	bit2: bitstorage port map (
+	    bitin => datain(2),
+	    enout => enout,
+	    writein => writein,
+	    bitout => dataout(2) );
+
+	bit3: bitstorage port map (
+	    bitin => datain(3),
+	    enout => enout,
+	    writein => writein,
+	    bitout => dataout(3) );
+
+	bit4: bitstorage port map (
+	    bitin => datain(4),
+	    enout => enout,
+	    writein => writein,
+	    bitout => dataout(4) );
+
+	bit5: bitstorage port map (
+	    bitin => datain(5),
+	    enout => enout,
+	    writein => writein,
+	    bitout => dataout(5) );
+
+	bit6: bitstorage port map (
+	    bitin => datain(6),
+	    enout => enout,
+	    writein => writein,
+	    bitout => dataout(6) );
+
+	bit7: bitstorage port map (
+	    bitin => datain(7),
+	    enout => enout,
+	    writein => writein,
+	    bitout => dataout(7) );
+
 end architecture memmy;
 
 --------------------------------------------------------------------------------
@@ -92,8 +141,37 @@ end entity register32;
 architecture biggermem of register32 is
 	-- hint: you'll want to put register8 as a component here 
 	-- so you can use it below
+		component register8
+		   port(datain: in std_logic_vector(7 downto 0);
+		   enout: in std_logic;
+		   writein: in std_logic;
+		   dataout: out std_logic_vector(7 downto 0));
+		end component;
+
+signal enableo, wrtin: std_logic_vector (3 downto 0);
+signal a,b: std_logic_vector (2 downto 0);
+
 begin
 	-- insert code here.
+	a <= enout32 & enout16 & enout8;
+	b <= writein32& writein16 & writein8;
+
+	with a select
+		enableo <= "1110" when "110",
+			   "1100" when "101",
+			   "0000" when "011",
+			   "1111" when others;
+
+	with b select
+		wrtin <= "0001" when "001",
+			 "0011" when "010",
+			 "1111" when "100",
+			 "0000" when others;
+
+	bit0: register8 port map (datain (7 downto 0), enableo(0), wrtin(0), dataout (7 downto  0));
+	bit1: register8 port map (datain (15 downto 8), enableo(1), wrtin(1), dataout (15 downto  8));
+	bit2: register8 port map (datain (23 downto 16), enableo(2), wrtin(2), dataout (23 downto  16));
+	bit3: register8 port map (datain (31 downto 24), enableo(3), wrtin(3), dataout (31 downto  24));
 end architecture biggermem;
 
 --------------------------------------------------------------------------------
@@ -111,9 +189,27 @@ entity adder_subtracter is
 end entity adder_subtracter;
 
 architecture calc of adder_subtracter is
+component fulladder
+    port (a, b, cin: in std_logic;
+            sum, carry: out std_logic);
+end component;
+
+    signal temp: std_logic_vector (31 downto 0);
+    signal addersub: std_logic_vector (32 downto 0);
 
 begin
-	-- insert code here.
+
+    addersub(0) <= add_sub;
+    co <= addersub(32);
+
+    with add_sub select
+        temp <= datain_b when '0',
+                not datain_b when others;
+
+    adderloop: for i in 31 downto 0 generate
+    addi: fulladder port map (datain_a(i), temp(i), addersub(i), dataout(i), addersub(i+1));
+    end generate;
+
 end architecture calc;
 
 --------------------------------------------------------------------------------
@@ -131,9 +227,19 @@ end entity shift_register;
 
 architecture shifter of shift_register is
 	
+signal x: std_logic_vector (2 downto 0);
 begin
 	-- insert code here.
-end architecture shifter;
+    x <= dir & shamt (1 downto 0);
 
+    with x select
+        dataout <= datain (30 downto 0) & '0' when "001",
+                   '0' & datain (31 downto 1) when "101",
+                   datain (29 downto 0) & "00" when "010",
+                   "00" & datain (31 downto 2) when "110",
+                   datain (28 downto 0) & "000" when "011",
+                   "000" & datain (31 downto 3) when "111",
+                   datain when others;
+end architecture shifter;
 
 
