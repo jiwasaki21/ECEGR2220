@@ -10,13 +10,14 @@ entity BusMux2to1 is
 end entity BusMux2to1;
 
 architecture selection of BusMux2to1 is
+--SIGNAL highz: STD_LOGIC_VECTOR(31 DOWNTO 0) := "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ";
 begin
           WITH selector SELECT
 		      Result <= In0 when '0',
 			        In1 when others;
 end architecture selection;
 
-
+--------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
@@ -39,7 +40,9 @@ end Control;
 
 architecture Boss of Control is
 begin
-	
+	--------------------------------------
+        --       ALU CONTROL OUTPUT         --
+        --------------------------------------
 	ALUCtrl <= "00000" when opcode = "0110011" and funct3 = "000" and funct7 = "0000000" else       --ADD
 	           "00000" when opcode = "0010011" and funct3 = "000"     else                          --ADDI
 	           "00100" when opcode = "0110011" and funct3 = "000" and funct7 = "0100000" else       -- SUB
@@ -57,34 +60,33 @@ begin
 	           "00001" when opcode = "0010011" and funct3 = "001"     else                          -- SLLI
 	           "01001" when opcode = "0010011" and funct3 = "101";                                  -- SRLI
 
-	
+	----------------------------------------
 	with opcode & funct3 select
 	Branch <= "10" when "1100011000", --beg
 		"01" when "1100011001", --bne 
 		"00" when others;
-	
 	MemRead <= '0'; 
+
 	MemToReg <= '1' when opcode = "0000011" else
 		    '0';
-	
+
 	MemWrite <= '1' when opcode = "0100011" and funct3 = "010" else
 		    '0';
 
-	ALUSrc <= '0' when opcode = "0110011" or opcode = "1100011" else 
+	ALUSrc <= '0' when opcode = "0110011" or opcode = "1100011" else -- R-type and B-type are the only times this is 0
 		  '1';
 
 	RegWrite <='0' when opcode="0100011" AND funct3="010" else	  	
 		   '0' when opcode="1100011" AND funct3="000" else	   
 		   '0' when opcode="1100011" AND funct3="001" else	    
 		   (not clk);
-	
-	ImmGen <= "00" when opcode = "0010011" or opcode = "0000011" or opcode = "0010011" else  
-                  "01" when opcode = "0100011" else                                             
-		  "10" when opcode = "1100011" else                                             
-		  "11";                                                                          
+
+	ImmGen <= "00" when opcode = "0010011" or opcode = "0000011" or opcode = "0010011" else -- I-Type 
+                  "01" when opcode = "0100011" else                                             -- SW
+		  "10" when opcode = "1100011" else                                             -- B-Type
+		  "11";                                                                         -- Specifically LUI, but don't care when others  
 
 end Boss;
-
 
 
 library IEEE;
@@ -105,13 +107,14 @@ begin
 	Process(Reset,Clock)
 	begin	
  		if Reset = '1' then
-			PCout <= X"003FFFFC";
+			PCout <= X"003FFFFC"; --after reset a clock cycle will pass and the program counter will resume at 0x00400000
 		elsif rising_edge(Clock) then 
-			PCout <= PCin; 
+			PCout <= PCin; --latches the next instruction
 		end if;
 	end process; 
 end executive;
 
+--------------------------------------------------------------------------------
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -144,6 +147,8 @@ begin
 					 
 END SignExtender;
 
+  
+  ---------------------------------------------------------
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;

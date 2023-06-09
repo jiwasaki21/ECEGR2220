@@ -9,7 +9,7 @@ entity RAM is
 	 Clock:	  in std_logic;	 
 	 OE:      in std_logic;
 	 WE:      in std_logic;
-	 Address: in std_logic_vector(29 downto 0);
+	 Address: in std_logic_vector(29 downto 0);  -- 30 bits addressable
 	 DataIn:  in std_logic_vector(31 downto 0);
 	 DataOut: out std_logic_vector(31 downto 0));
 end entity RAM;
@@ -55,6 +55,9 @@ begin
 end staticRAM;	
 
 
+---------------------------------------------------------------------
+------- START OF REGISTER BANK ENTITY
+---------------------------------------------------------------------
 LIBRARY ieee;
 Use ieee.std_logic_1164.all;
 Use ieee.numeric_std.all;
@@ -114,32 +117,35 @@ begin
 	a6: register32 port map(WriteData, enable, enable, enable, a6_write, a6_write, a6_write, a6_out);
 	a7: register32 port map(WriteData, enable, enable, enable, a7_write, a7_write, a7_write, a7_out);
 
-
+	--READ--
 	with ReadReg1 select
-		ReadData1 <= ZeroOut when "00000", 
-			     	a0_out when "01010",  
-				a1_out when "01011",  
-				a2_out when "01100",  
-				a3_out when "01101",  
-				a4_out when "01110",  	
-				a5_out when "01111",  
-				a6_out when "10000",  
-				a7_out when "10001",  
+		ReadData1 <= ZeroOut when "00000", -- Zero reg # x0 = 00000
+			     	a0_out when "01010",  -- a0 reg # x10 = 01010
+				a1_out when "01011",  -- a1 reg # x11 = 01011
+				a2_out when "01100",  -- a2 reg # x12 = 01100
+				a3_out when "01101",  -- a3 reg # x13 = 01101
+				a4_out when "01110",  -- a4 reg # x14 = 01110	
+				a5_out when "01111",  -- a5 reg # x15 = 01111
+				a6_out when "10000",  -- a6 reg # x16 = 10000
+				a7_out when "10001",  -- a7 reg # x17 = 10001
 				Fail_read when others;
 	with ReadReg2 select
-		ReadData2 <=   ZeroOut when "00000", 
-			     	a0_out when "01010",  
-				a1_out when "01011",  
-				a2_out when "01100",  
-				a3_out when "01101",  
-				a4_out when "01110", 
-				a5_out when "01111",  
-				a6_out when "10000",  
-				a7_out when "10001",  
+		ReadData2 <=   ZeroOut when "00000", -- Zero reg #00000
+			     	a0_out when "01010",  -- a0 reg # x10 = 01010
+				a1_out when "01011",  -- a1 reg # x11 = 01011
+				a2_out when "01100",  -- a2 reg # x12 = 01100
+				a3_out when "01101",  -- a3 reg # x13 = 01101
+				a4_out when "01110",  -- a4 reg # x14 = 01110	
+				a5_out when "01111",  -- a5 reg # x15 = 01111
+				a6_out when "10000",  -- a6 reg # x16 = 10000
+				a7_out when "10001",  -- a7 reg # x17 = 10001
 				Fail_read when others;
 
 end remember;
 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------START OF SINGLE BIT FLIP FLOP FOR REGISTER-------------------
+--------------------------------------------------------------------
 
 Library ieee;
 Use ieee.std_logic_1164.all;
@@ -168,6 +174,10 @@ begin
 end architecture memlike;
 
 
+
+----------------------------------------------
+-----8-BIT REGISTER SEFCTION-----------------
+-----------------------------------------------------------------
 Library ieee;
 Use ieee.std_logic_1164.all;
 Use ieee.numeric_std.all;
@@ -229,9 +239,9 @@ architecture biggermem of register32 is
 	end component;
 begin
   
-        w8 <= writein8  OR writein16 OR writein32; 
-        w16 <= writein16 OR writein32;              
-        w32 <= writein32;                          
+        w8 <= writein8  OR writein16 OR writein32; -- 8 or 16 or 32. In any case 8bits will get written
+        w16 <= writein16 OR writein32;              -- 16 or 32. In any case 16 bits
+        w32 <= writein32;                           -- 32 bits
 
 	out8 <= enout8 AND enout16 AND enout32;     
         out16 <= enout16 AND enout32;
@@ -245,3 +255,6 @@ begin
 	m3: register8 port map(datain(31 downto 24), out32,  w32, dataout(31 downto 24));
 
 end architecture biggermem;
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------

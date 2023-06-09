@@ -18,7 +18,7 @@ architecture addlike of fulladder is
   		carry <= (a and b) or (a and cin) or (b and cin); 
 end architecture addlike;
 
-
+--------------------------------------------------------------------------------
 
 Library ieee;
 Use ieee.std_logic_1164.all;
@@ -62,6 +62,7 @@ END GENERATE;
 
 end calc;
 
+-----------------------------------------------------------------------------
 
 Library ieee;
 Use ieee.std_logic_1164.all;
@@ -89,6 +90,7 @@ begin
 
 end architecture shifter;
 
+-----------------------------------------------------------------------------
 
 Library ieee;
 Use ieee.std_logic_1164.all;

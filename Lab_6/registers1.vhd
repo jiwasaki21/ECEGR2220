@@ -1,3 +1,9 @@
+--------------------------------------------------------------------------------
+--
+-- LAB #3
+--
+--------------------------------------------------------------------------------
+
 Library ieee;
 Use ieee.std_logic_1164.all;
 Use ieee.numeric_std.all;
@@ -24,7 +30,7 @@ begin
 	bitout <= q when enout = '0' else 'Z';
 end architecture memlike;
 
-
+--------------------------------------------------------------------------------
 Library ieee;
 Use ieee.std_logic_1164.all;
 Use ieee.numeric_std.all;
@@ -46,6 +52,7 @@ begin
 end architecture addlike;
 
 
+--------------------------------------------------------------------------------
 Library ieee;
 Use ieee.std_logic_1164.all;
 Use ieee.numeric_std.all;
@@ -117,7 +124,7 @@ begin
 	reg08: register8 port map(datain(7 downto 0),   enabler(0), writer(0), dataout(7 downto 0));
 end architecture biggermem;
 
-
+--------------------------------------------------------------------------------
 Library ieee;
 Use ieee.std_logic_1164.all;
 Use ieee.numeric_std.all;
@@ -156,7 +163,7 @@ begin
 		
 end architecture calc;
 
-
+--------------------------------------------------------------------------------
 Library ieee;
 Use ieee.std_logic_1164.all;
 Use ieee.numeric_std.all;

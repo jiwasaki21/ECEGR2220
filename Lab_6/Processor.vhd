@@ -81,36 +81,56 @@ architecture holistic of Processor is
 	end component adder_subtracter;
 	
 
-
-signal  PCout : std_logic_vector(31 downto 0); 
-signal  PCAdderOut : std_logic_vector(31 downto 0);  
-signal  PCAddco : std_logic;  
-signal  BNEout: std_logic;  
-signal  BranchAddOut: std_logic_vector(31 downto 0);  
+	------------------------------------
+	--     PROGRAM COUNTER SIGNALS    --
+	------------------------------------
+signal  PCout : std_logic_vector(31 downto 0);  --output of program counter to IM
+signal  PCAdderOut : std_logic_vector(31 downto 0);  --result of PC+4
+signal  PCAddco : std_logic;  --Program counter adder carryout
+signal  BNEout: std_logic;  --Branch logic output
+signal  BranchAddOut: std_logic_vector(31 downto 0);  --  Signal out of add/sub for branch instructions
 signal  BranchAddCarry: std_logic;
 
-signal  PcMuxOut : std_logic_vector(31 downto 0);  
-signal ImmGenOut : std_logic_vector(31 downto 0); 
-signal IMtoImmGen : std_logic_vector(31 downto 0); 
+signal  PcMuxOut : std_logic_vector(31 downto 0);  -- Output from PC Mux
 
-signal IMOUT : std_logic_vector(31 downto 0); 
+	-----------------------------------
+	--   IMMEDIATE GENERATOR SIGNALS --
+	-----------------------------------
+signal ImmGenOut : std_logic_vector(31 downto 0);  --output of immediate generator
+signal IMtoImmGen : std_logic_vector(31 downto 0);  -- Output from instruction memory to immediate generator
 
-signal RegDat1 : std_logic_vector(31 downto 0);
+	----------------------------------
+	--  INSTRUCTION MEMORY SIGNAL  --
+	----------------------------------
+signal IMOUT : std_logic_vector(31 downto 0);  --Output of instruction memory bank
+
+	----------------------------------
+	--         REG32 SIGNALS        --
+	----------------------------------
+signal RegDat1 : std_logic_vector(31 downto 0); -- Both signals are outputs from registers
 signal RegDat2 : std_logic_vector(31 downto 0);  
 
 
-signal Mux2ALU : std_logic_vector(31 downto 0); 
-signal ALUOut  : std_logic_vector(31 downto 0); 
-signal ALUzero : std_logic;  
+	----------------------------------
+	--          ALU SIGNALS         --
+	----------------------------------
+signal Mux2ALU : std_logic_vector(31 downto 0); -- Input to ALU
+signal ALUOut  : std_logic_vector(31 downto 0); -- Output from ALU
+signal ALUzero : std_logic;  -- Output from ALU zero detector
 
-
+	----------------------------------
+	--     DATA MEMORY SIGNALS      --
+	----------------------------------
 signal MemReadOut : std_logic_vector(31 downto 0);
 
 signal MeMuxOut   : std_logic_vector(31 downto 0);
 
-signal Acct30bit  : std_logic_vector(29 downto 0); 
+signal Acct30bit  : std_logic_vector(29 downto 0);  -- This is a special signal to account for proper addressing of memory
 
 
+	----------------------------------
+	--    CONTROL BLOCK SIGNALS     --
+	----------------------------------
 signal BranchCTRL   : std_logic_vector(1 downto 0);
 signal MemReadCTRL  : std_logic;
 signal MemToRegCTRL : std_logic;
@@ -122,29 +142,51 @@ signal ImmGenCTRL   : std_logic_vector(1 downto 0);
 
 begin
 
+	-----------------------------------
+	--    PROGRAM COUNTER MAPS       --
+	-----------------------------------
 	PC :         ProgramCounter   port map(reset, clock, PCMuxOut, PCout);
 	PCAdder:     adder_subtracter  port map(PCout,  "00000000000000000000000000000100", '0', PCAdderOut, PCAddco);
 	Branchadder: adder_subtracter port map(PCout, ImmGenOut, '0', BranchAddOut, BranchAddCarry);
 	PCmux:       BusMux2To1       port map(BNEout, PCAdderOut,  BranchAddOut, PCMuxOut);	
+       -- BranchOrNot: branchlogic      port map(BranchCTRL, ALUZero, BNEOut);
+
+	----------------------------------
+	--  INSTRUCTION MEMORY MAP      --
+	----------------------------------
 	IM :         InstructionRAM   port map(reset, clock, PCOut(31 downto 2), IMOUT);
 
 
+	----------------------------------
+	--     CONTROL BLOCK MAP        --
+	----------------------------------
 	CTRL :       Control          port map(clock, IMOUT(6 downto 0), IMOUT(14 downto 12), IMOUT(31 downto 25), BranchCTRL, MemReadCTRL, MemToRegCTRL,
 														 ALUCTRLCTRL, MemWriteCTRL, ALUSrcCTRL, RegWriteCTRL, ImmGenCTRL);
 
+	---------------------------------
+	--         REG32 MAPS          --
+	---------------------------------
 	Reg32 :      Registers        port map(IMOUT(19 downto 15), IMOUT(24 downto 20), IMOUT(11 downto 7), MeMuxOut, RegWriteCTRL, RegDat1, RegDat2);
        
 	RegMux:      BusMux2To1       port map(ALUSrcCTRL, RegDat2, ImmGenOut, Mux2ALU);
 
-
+	--------------------------------
+	--        ALU MAP             --
+	--------------------------------
 	TheALU :     ALU              port map(RegDat1, Mux2ALU, ALUCTRLCTRL, ALUZero, ALUOut);
 
+	--------------------------------
+	--    DATA MEMORY MAPS        --
+	--------------------------------
 	Acct30bit <= "0000" & ALUOUT(27 downto 2);
 	
 	DMEM :       RAM              port map(reset, clock, MemReadCTRL, MemWriteCTRL, Acct30bit, RegDat2, MemReadOut);
 
 	MeMux :      BusMux2To1       port map(MemToRegCTRL, ALUOut, MemReadOut, MeMuxOut);
 
+	---------------------------------
+	--        IMMGEN MAP           --
+	---------------------------------
 
 	with ImmGenCTRL & IMOUT(31) select
 	ImmGenOut <=   "111111111111111111111" & IMOUT(30 downto 20) when "001",  --I_type
